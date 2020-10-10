@@ -101,6 +101,33 @@
     </param>
     <param>
       <key>_coordinate</key>
+      <value>(760, 428)</value>
+    </param>
+    <param>
+      <key>_rotation</key>
+      <value>0</value>
+    </param>
+    <param>
+      <key>id</key>
+      <value>dmrange</value>
+    </param>
+    <param>
+      <key>value</key>
+      <value>np.arange(150.0,500.0,25.0)</value>
+    </param>
+  </block>
+  <block>
+    <key>variable</key>
+    <param>
+      <key>comment</key>
+      <value></value>
+    </param>
+    <param>
+      <key>_enabled</key>
+      <value>True</value>
+    </param>
+    <param>
+      <key>_coordinate</key>
       <value>(1192, 36)</value>
     </param>
     <param>
@@ -113,7 +140,7 @@
     </param>
     <param>
       <key>value</key>
-      <value>2500</value>
+      <value>1250</value>
     </param>
   </block>
   <block>
@@ -209,6 +236,33 @@
     </param>
     <param>
       <key>_coordinate</key>
+      <value>(760, 492)</value>
+    </param>
+    <param>
+      <key>_rotation</key>
+      <value>0</value>
+    </param>
+    <param>
+      <key>id</key>
+      <value>ndms</value>
+    </param>
+    <param>
+      <key>value</key>
+      <value>len(dmrange)</value>
+    </param>
+  </block>
+  <block>
+    <key>variable</key>
+    <param>
+      <key>comment</key>
+      <value></value>
+    </param>
+    <param>
+      <key>_enabled</key>
+      <value>True</value>
+    </param>
+    <param>
+      <key>_coordinate</key>
       <value>(0, 132)</value>
     </param>
     <param>
@@ -284,9 +338,7 @@ class blk(gr.sync_block):  # other base classes are basic_block, decim_block, in
         self.obufs = np.zeros((self.ndms+1,fbrate))
         self.ocount = 0
         self.thresh = thresh
-        print self.maxdelays
-        print self.delayincrs
-        
+
     def work(self, input_items, output_items):
         """Do dedispersion/folding"""
         q = input_items[0]
@@ -353,7 +405,7 @@ look for strong pulse</value>
     </param>
     <param>
       <key>dms</key>
-      <value>[150.0,200.0,250.0,300.0,350.0,400.0,450.0,500.0]</value>
+      <value>dmrange</value>
     </param>
     <param>
       <key>_enabled</key>
@@ -390,50 +442,6 @@ look for strong pulse</value>
     <param>
       <key>thresh</key>
       <value>threshold</value>
-    </param>
-  </block>
-  <block>
-    <key>blocks_complex_to_float</key>
-    <param>
-      <key>alias</key>
-      <value></value>
-    </param>
-    <param>
-      <key>comment</key>
-      <value>Effect spectral inversion--makes some
-of the downstream routines easier</value>
-    </param>
-    <param>
-      <key>affinity</key>
-      <value></value>
-    </param>
-    <param>
-      <key>_enabled</key>
-      <value>True</value>
-    </param>
-    <param>
-      <key>_coordinate</key>
-      <value>(408, 80)</value>
-    </param>
-    <param>
-      <key>_rotation</key>
-      <value>0</value>
-    </param>
-    <param>
-      <key>id</key>
-      <value>blocks_complex_to_float_0</value>
-    </param>
-    <param>
-      <key>maxoutbuf</key>
-      <value>0</value>
-    </param>
-    <param>
-      <key>minoutbuf</key>
-      <value>0</value>
-    </param>
-    <param>
-      <key>vlen</key>
-      <value>1</value>
     </param>
   </block>
   <block>
@@ -480,7 +488,7 @@ of the downstream routines easier</value>
     </param>
   </block>
   <block>
-    <key>blocks_float_to_complex</key>
+    <key>blocks_conjugate_cc</key>
     <param>
       <key>alias</key>
       <value></value>
@@ -499,7 +507,7 @@ of the downstream routines easier</value>
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(672, 88)</value>
+      <value>(456, 224)</value>
     </param>
     <param>
       <key>_rotation</key>
@@ -507,7 +515,7 @@ of the downstream routines easier</value>
     </param>
     <param>
       <key>id</key>
-      <value>blocks_float_to_complex_0</value>
+      <value>blocks_conjugate_cc_0</value>
     </param>
     <param>
       <key>maxoutbuf</key>
@@ -516,10 +524,6 @@ of the downstream routines easier</value>
     <param>
       <key>minoutbuf</key>
       <value>0</value>
-    </param>
-    <param>
-      <key>vlen</key>
-      <value>1</value>
     </param>
   </block>
   <block>
@@ -831,7 +835,38 @@ internally</value>
     </param>
     <param>
       <key>value</key>
-      <value>408.0e6</value>
+      <value>611e6</value>
+    </param>
+  </block>
+  <block>
+    <key>import</key>
+    <param>
+      <key>alias</key>
+      <value></value>
+    </param>
+    <param>
+      <key>comment</key>
+      <value></value>
+    </param>
+    <param>
+      <key>_enabled</key>
+      <value>True</value>
+    </param>
+    <param>
+      <key>_coordinate</key>
+      <value>(240, 44)</value>
+    </param>
+    <param>
+      <key>_rotation</key>
+      <value>0</value>
+    </param>
+    <param>
+      <key>id</key>
+      <value>import_0</value>
+    </param>
+    <param>
+      <key>import</key>
+      <value>import numpy as np</value>
     </param>
   </block>
   <block>
@@ -2430,25 +2465,13 @@ internally</value>
     </param>
   </block>
   <connection>
-    <source_block_id>blocks_complex_to_float_0</source_block_id>
-    <sink_block_id>blocks_float_to_complex_0</sink_block_id>
-    <source_key>1</source_key>
-    <sink_key>0</sink_key>
-  </connection>
-  <connection>
-    <source_block_id>blocks_complex_to_float_0</source_block_id>
-    <sink_block_id>blocks_float_to_complex_0</sink_block_id>
-    <source_key>0</source_key>
-    <sink_key>1</sink_key>
-  </connection>
-  <connection>
     <source_block_id>blocks_complex_to_mag_squared_0</source_block_id>
     <sink_block_id>blocks_integrate_xx_0</sink_block_id>
     <source_key>0</source_key>
     <sink_key>0</sink_key>
   </connection>
   <connection>
-    <source_block_id>blocks_float_to_complex_0</source_block_id>
+    <source_block_id>blocks_conjugate_cc_0</source_block_id>
     <sink_block_id>blocks_stream_to_vector_0</sink_block_id>
     <source_key>0</source_key>
     <sink_key>0</sink_key>
@@ -2479,7 +2502,7 @@ internally</value>
   </connection>
   <connection>
     <source_block_id>osmosdr_source_0</source_block_id>
-    <sink_block_id>blocks_complex_to_float_0</sink_block_id>
+    <sink_block_id>blocks_conjugate_cc_0</sink_block_id>
     <source_key>0</source_key>
     <sink_key>0</sink_key>
   </connection>

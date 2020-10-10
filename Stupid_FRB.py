@@ -42,9 +42,7 @@ class blk(gr.sync_block):  # other base classes are basic_block, decim_block, in
         self.obufs = np.zeros((self.ndms+1,fbrate))
         self.ocount = 0
         self.thresh = thresh
-        print self.maxdelays
-        print self.delayincrs
-        
+
     def work(self, input_items, output_items):
         """Do dedispersion/folding"""
         q = input_items[0]
