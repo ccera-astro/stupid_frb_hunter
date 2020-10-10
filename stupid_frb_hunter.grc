@@ -336,7 +336,7 @@ class blk(gr.sync_block):  # other base classes are basic_block, decim_block, in
             incr = int(round(float(smear)/float(fbsize)))
             self.maxdelays.append(smear)
             self.delayincrs.append(incr)
-        self.obufs = np.zeros((self.ndms+1,fbrate*2))
+        self.obufs = np.zeros((self.ndms+1,fbrate))
         self.avgs = [0.0]*(self.ndms+1)
         self.ocount = 0
         self.thresh = thresh
