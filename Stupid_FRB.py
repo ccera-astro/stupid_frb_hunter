@@ -10,6 +10,7 @@ import numpy as np
 from gnuradio import gr
 import time
 import json
+import math
 
 class blk(gr.sync_block):  # other base classes are basic_block, decim_block, interp_block
     """A pulsar folder/de-dispersion block"""
@@ -39,7 +40,8 @@ class blk(gr.sync_block):  # other base classes are basic_block, decim_block, in
             incr = int(round(float(smear)/float(fbsize)))
             self.maxdelays.append(smear)
             self.delayincrs.append(incr)
-        self.obufs = np.zeros((self.ndms+1,fbrate))
+        self.obufs = np.zeros((self.ndms+1,fbrate*2))
+        self.avgs = [0.0]*(self.ndms+1)
         self.ocount = 0
         self.thresh = thresh
 
@@ -76,8 +78,13 @@ class blk(gr.sync_block):  # other base classes are basic_block, decim_block, in
                 self.ocount = 0
                 
                 for x in range(self.ndms+1):
-                    avg = sum(self.obufs[x])
+                    avg = math.fsum(self.obufs[x])
                     avg /= len(self.obufs[x])
+                    if (self.avgs[x] == 0):
+                        self.avgs[x] = avg
+                    avg += self.avgs[x]
+                    avg /= 2.0
+                    self.avgs[x] = avg
                     if ((max(self.obufs[x]) > avg*self.thresh) and x != 0):
                         t = time.gmtime()
                         d = {}
@@ -90,7 +97,6 @@ class blk(gr.sync_block):  # other base classes are basic_block, decim_block, in
                         d["dms"] = [0.0]+self.dmtable
                         d["trigger"] = (x,d["dms"][x])
                         fn = self.filespec+"-"+d["time"]+".json"
-                        print "Writing %s" % fn
                         fp = open(fn, "w")
                         fp.write(json.dumps(d, indent=4)+"\n")
                         fp.close()  
