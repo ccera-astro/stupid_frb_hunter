@@ -109,11 +109,38 @@
     </param>
     <param>
       <key>id</key>
-      <value>dmrange</value>
+      <value>dmrange1</value>
     </param>
     <param>
       <key>value</key>
-      <value>np.arange(150.0,500.0,25.0)</value>
+      <value>np.arange(150.0,400.0,25.0)</value>
+    </param>
+  </block>
+  <block>
+    <key>variable</key>
+    <param>
+      <key>comment</key>
+      <value></value>
+    </param>
+    <param>
+      <key>_enabled</key>
+      <value>True</value>
+    </param>
+    <param>
+      <key>_coordinate</key>
+      <value>(760, 492)</value>
+    </param>
+    <param>
+      <key>_rotation</key>
+      <value>0</value>
+    </param>
+    <param>
+      <key>id</key>
+      <value>dmrange2</value>
+    </param>
+    <param>
+      <key>value</key>
+      <value>np.arange(400.0,650.0,25.0)</value>
     </param>
   </block>
   <block>
@@ -222,33 +249,6 @@
     <param>
       <key>value</key>
       <value>(freq+(samp_rate/2.0))/1.0e6</value>
-    </param>
-  </block>
-  <block>
-    <key>variable</key>
-    <param>
-      <key>comment</key>
-      <value></value>
-    </param>
-    <param>
-      <key>_enabled</key>
-      <value>True</value>
-    </param>
-    <param>
-      <key>_coordinate</key>
-      <value>(760, 492)</value>
-    </param>
-    <param>
-      <key>_rotation</key>
-      <value>0</value>
-    </param>
-    <param>
-      <key>id</key>
-      <value>ndms</value>
-    </param>
-    <param>
-      <key>value</key>
-      <value>len(dmrange)</value>
     </param>
   </block>
   <block>
@@ -411,7 +411,7 @@ look for strong pulse</value>
     </param>
     <param>
       <key>dms</key>
-      <value>dmrange</value>
+      <value>dmrange1</value>
     </param>
     <param>
       <key>_enabled</key>
@@ -427,7 +427,7 @@ look for strong pulse</value>
     </param>
     <param>
       <key>filename</key>
-      <value>outfile</value>
+      <value>outfile+"-1"</value>
     </param>
     <param>
       <key>freq</key>
@@ -444,6 +444,178 @@ look for strong pulse</value>
     <param>
       <key>id</key>
       <value>Stupid_FRB</value>
+    </param>
+    <param>
+      <key>thresh</key>
+      <value>threshold</value>
+    </param>
+  </block>
+  <block>
+    <key>epy_block</key>
+    <param>
+      <key>alias</key>
+      <value></value>
+    </param>
+    <param>
+      <key>_io_cache</key>
+      <value>('Stupid FRB Hunter', 'blk', [('fbsize', '16'), ('filename', "'/dev/null'"), ('fbrate', '2500'), ('dms', '[10.0, 20.0, 30.0, 40.0, 50.0]'), ('freq', '408000000.0'), ('bw', '2560000.0'), ('thresh', '5.0')], [('0', 'float', 1)], [], 'A pulsar folder/de-dispersion block', ['thresh'])</value>
+    </param>
+    <param>
+      <key>bw</key>
+      <value>samp_rate</value>
+    </param>
+    <param>
+      <key>_source_code</key>
+      <value>"""
+Embedded Python Blocks:
+
+Each time this file is saved, GRC will instantiate the first class it finds
+to get ports and parameters of your block. The arguments to __init__  will
+be the parameters. All of them are required to have default values!
+"""
+
+import numpy as np
+from gnuradio import gr
+import time
+import json
+import math
+
+class blk(gr.sync_block):  # other base classes are basic_block, decim_block, interp_block
+    """A pulsar folder/de-dispersion block"""
+
+    def __init__(self, fbsize=16,filename='/dev/null',fbrate=2500,dms=[10.0,20.0,30.0,40.0,50.0],freq=408.0e6,bw=2.56e6,thresh=5.0):  # only default arguments here
+        """arguments to this function show up as parameters in GRC"""
+        gr.sync_block.__init__(
+            self,
+            name='Stupid FRB Hunter',   # will show up in GRC
+            in_sig=[np.float32],
+            out_sig=None
+        )
+        # if an attribute with the same name as a parameter is found,
+        # a callback is registered (properties work, too).
+        
+        self.dmtable=dms
+        self.filespec=filename
+        self.flen = fbsize
+        self.maxdelays = []
+        self.delayincrs = []
+        flower = (freq-(bw/2.0))/1.0e6
+        fupper = (freq+(bw/2.0))/1.0e6
+        self.ndms = len(self.dmtable)
+        for dm in self.dmtable:
+            smear = dm/2.41e-4 * (1.0/(flower*flower)-1.0/(fupper*fupper))
+            smear = int(round(smear * fbrate))
+            incr = int(round(float(smear)/float(fbsize)))
+            self.maxdelays.append(smear)
+            self.delayincrs.append(incr)
+        self.obufs = np.zeros((self.ndms+1,fbrate*2))
+        self.avgs = [0.0]*(self.ndms+1)
+        self.ocount = 0
+        self.thresh = thresh
+
+    def work(self, input_items, output_items):
+        """Do dedispersion/folding"""
+        q = input_items[0]
+        l = len(q)
+        for i in range(int(l/self.flen)):
+            bndx = i*self.flen
+            
+            for x in range(self.ndms):
+            #
+            # Do delay/dedispersion logic
+            #
+                if (self.maxdelays[x] &gt; 0):
+                    outval = 0.0
+                    #
+                    # start at 1 because
+                    #  we already know maxdelay &gt; 1
+                    #
+                    for j in range(1,self.flen):
+                        if ((self.maxdelays[x] - (self.delayincrs[x]*j)) &lt;= 0):
+                            outval += q[bndx+j]
+                    self.maxdelays[x] -= 1
+                else:
+                    outval = sum(q[bndx:bndx+self.flen])
+                
+                
+                self.obufs[x+1][self.ocount] = outval
+            
+            self.obufs[0][self.ocount] = sum(q[bndx:bndx+self.flen])
+            self.ocount += 1
+            if (self.ocount &gt;= len(self.obufs[0])):
+                self.ocount = 0
+                
+                for x in range(self.ndms+1):
+                    avg = math.fsum(self.obufs[x])
+                    avg /= len(self.obufs[x])
+                    if (self.avgs[x] == 0):
+                        self.avgs[x] = avg
+                    avg += self.avgs[x]
+                    avg /= 2.0
+                    self.avgs[x] = avg
+                    if ((max(self.obufs[x]) &gt; avg*self.thresh) and x != 0):
+                        t = time.gmtime()
+                        d = {}
+                        d["time"] = "%04d%02d%02d-%02d:%02d:%02d" % (t.tm_year,
+                            t.tm_mon, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec)
+                        tseries = []
+                        for obuf in self.obufs:
+                            tseries.append(list(obuf))
+                        d["tseries"] = tseries
+                        d["dms"] = [0.0]+self.dmtable
+                        d["trigger"] = (x,d["dms"][x])
+                        fn = self.filespec+"-"+d["time"]+".json"
+                        fp = open(fn, "w")
+                        fp.write(json.dumps(d, indent=4)+"\n")
+                        fp.close()  
+                        break                  
+
+            
+        return len(q)
+</value>
+    </param>
+    <param>
+      <key>comment</key>
+      <value>Hunt for FRBs
+Compute incoherent de-dispersion across
+a set of different trial DMs
+look for strong pulse</value>
+    </param>
+    <param>
+      <key>dms</key>
+      <value>dmrange2</value>
+    </param>
+    <param>
+      <key>_enabled</key>
+      <value>True</value>
+    </param>
+    <param>
+      <key>fbrate</key>
+      <value>fbrate</value>
+    </param>
+    <param>
+      <key>fbsize</key>
+      <value>fbsize</value>
+    </param>
+    <param>
+      <key>filename</key>
+      <value>outfile+"-2"</value>
+    </param>
+    <param>
+      <key>freq</key>
+      <value>freq</value>
+    </param>
+    <param>
+      <key>_coordinate</key>
+      <value>(1000, 664)</value>
+    </param>
+    <param>
+      <key>_rotation</key>
+      <value>0</value>
+    </param>
+    <param>
+      <key>id</key>
+      <value>Stupid_FRB_0</value>
     </param>
     <param>
       <key>thresh</key>
@@ -2429,6 +2601,12 @@ internally</value>
   <connection>
     <source_block_id>blocks_vector_to_stream_0</source_block_id>
     <sink_block_id>Stupid_FRB</sink_block_id>
+    <source_key>0</source_key>
+    <sink_key>0</sink_key>
+  </connection>
+  <connection>
+    <source_block_id>blocks_vector_to_stream_0</source_block_id>
+    <sink_block_id>Stupid_FRB_0</sink_block_id>
     <source_key>0</source_key>
     <sink_key>0</sink_key>
   </connection>
