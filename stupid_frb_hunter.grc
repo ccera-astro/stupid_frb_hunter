@@ -113,7 +113,7 @@
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(824, 784)</value>
+      <value>(1096, 672)</value>
     </param>
     <param>
       <key>_rotation</key>
@@ -144,6 +144,60 @@
     </param>
     <param>
       <key>_coordinate</key>
+      <value>(432, 700)</value>
+    </param>
+    <param>
+      <key>_rotation</key>
+      <value>0</value>
+    </param>
+    <param>
+      <key>id</key>
+      <value>f_lower</value>
+    </param>
+    <param>
+      <key>value</key>
+      <value>(skyf-srate/2.0)/1.0e6</value>
+    </param>
+  </block>
+  <block>
+    <key>variable</key>
+    <param>
+      <key>comment</key>
+      <value></value>
+    </param>
+    <param>
+      <key>_enabled</key>
+      <value>True</value>
+    </param>
+    <param>
+      <key>_coordinate</key>
+      <value>(544, 700)</value>
+    </param>
+    <param>
+      <key>_rotation</key>
+      <value>0</value>
+    </param>
+    <param>
+      <key>id</key>
+      <value>f_upper</value>
+    </param>
+    <param>
+      <key>value</key>
+      <value>(skyf+srate/2.0)/1.0e6</value>
+    </param>
+  </block>
+  <block>
+    <key>variable</key>
+    <param>
+      <key>comment</key>
+      <value></value>
+    </param>
+    <param>
+      <key>_enabled</key>
+      <value>True</value>
+    </param>
+    <param>
+      <key>_coordinate</key>
       <value>(1192, 36)</value>
     </param>
     <param>
@@ -156,7 +210,7 @@
     </param>
     <param>
       <key>value</key>
-      <value>5000</value>
+      <value>4000</value>
     </param>
   </block>
   <block>
@@ -198,7 +252,7 @@
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(680, 796)</value>
+      <value>(768, 700)</value>
     </param>
     <param>
       <key>_rotation</key>
@@ -225,6 +279,33 @@
     </param>
     <param>
       <key>_coordinate</key>
+      <value>(648, 700)</value>
+    </param>
+    <param>
+      <key>_rotation</key>
+      <value>0</value>
+    </param>
+    <param>
+      <key>id</key>
+      <value>minsmear</value>
+    </param>
+    <param>
+      <key>value</key>
+      <value>dm/2.41e-4 * (1.0/(f_lower*f_lower)-1.0/(f_upper*f_upper))</value>
+    </param>
+  </block>
+  <block>
+    <key>variable</key>
+    <param>
+      <key>comment</key>
+      <value></value>
+    </param>
+    <param>
+      <key>_enabled</key>
+      <value>True</value>
+    </param>
+    <param>
+      <key>_coordinate</key>
       <value>(712, 908)</value>
     </param>
     <param>
@@ -237,7 +318,7 @@
     </param>
     <param>
       <key>value</key>
-      <value>prefix+"frb-"+str(int(freq/1.0e6))</value>
+      <value>prefix+"frb-"+str(int(skyf/1.0e6))</value>
     </param>
   </block>
   <block>
@@ -265,6 +346,33 @@
     <param>
       <key>value</key>
       <value>int(srate)</value>
+    </param>
+  </block>
+  <block>
+    <key>variable</key>
+    <param>
+      <key>comment</key>
+      <value></value>
+    </param>
+    <param>
+      <key>_enabled</key>
+      <value>True</value>
+    </param>
+    <param>
+      <key>_coordinate</key>
+      <value>(336, 700)</value>
+    </param>
+    <param>
+      <key>_rotation</key>
+      <value>0</value>
+    </param>
+    <param>
+      <key>id</key>
+      <value>skyf</value>
+    </param>
+    <param>
+      <key>value</key>
+      <value>freq if sky &lt;= 0 else sky</value>
     </param>
   </block>
   <block>
@@ -315,14 +423,27 @@ class blk(gr.sync_block):  # other base classes are basic_block, decim_block, in
         # if an attribute with the same name as a parameter is found,
         # a callback is registered (properties work, too).
         
+        #
+        # We create a "work queue" of preliminary events
+        #  The dequeue worker does further analysis before
+        #  logging the event.
         self.aQueue = Queue.Queue(maxsize=16)
         self.filename = filename
+        
+        #
+        # we (somewhat arbitrarily) inspect a two-second window of
+        #  channel data looking for pulses
+        #
         self.two_seconds = int(fbrate*2)
         self.channels=[]
         self.chans = chans
         self.lchans = len(chans)
         self.declination = declination
         self.scnt = 0
+        #
+        # The minimum time distance for detected
+        #  pulses between the lowest and highest frequency
+        #
         self.mindistance = minsmear * float(fbrate)
         self.mindistance = int(self.mindistance)
         for x in range(fbsize):
@@ -331,6 +452,11 @@ class blk(gr.sync_block):  # other base classes are basic_block, decim_block, in
         self.thresh = thresh
         self.flen = fbsize
 
+    #
+    # Log an event
+    #
+    # We basically log the entire two-second channel buffer
+    #
     def logthispuppy(self,chans,evt):
         q = self.thresh
         ltp = evt
@@ -430,7 +556,8 @@ class blk(gr.sync_block):  # other base classes are basic_block, decim_block, in
       <value>Hunt for FRBs
 Look for strong pulses in a select subset of
 FFT bins.  Confirm roughly-correct
-timing of those pulses.</value>
+timing of those pulses. We use a two-second
+window to evaluate pulse events.</value>
     </param>
     <param>
       <key>declination</key>
@@ -695,7 +822,7 @@ to vector internally</value>
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(736, 628)</value>
+      <value>(736, 524)</value>
     </param>
     <param>
       <key>_rotation</key>
@@ -868,6 +995,53 @@ to vector internally</value>
     </param>
   </block>
   <block>
+    <key>parameter</key>
+    <param>
+      <key>alias</key>
+      <value></value>
+    </param>
+    <param>
+      <key>comment</key>
+      <value></value>
+    </param>
+    <param>
+      <key>_enabled</key>
+      <value>True</value>
+    </param>
+    <param>
+      <key>_coordinate</key>
+      <value>(696, 792)</value>
+    </param>
+    <param>
+      <key>_rotation</key>
+      <value>0</value>
+    </param>
+    <param>
+      <key>id</key>
+      <value>dm</value>
+    </param>
+    <param>
+      <key>label</key>
+      <value>Minimum Dispersion Measure</value>
+    </param>
+    <param>
+      <key>short_id</key>
+      <value></value>
+    </param>
+    <param>
+      <key>hide</key>
+      <value>none</value>
+    </param>
+    <param>
+      <key>type</key>
+      <value>eng_float</value>
+    </param>
+    <param>
+      <key>value</key>
+      <value>150</value>
+    </param>
+  </block>
+  <block>
     <key>fft_vxx</key>
     <param>
       <key>alias</key>
@@ -1006,53 +1180,6 @@ to vector internally</value>
     <param>
       <key>import</key>
       <value>import numpy as np</value>
-    </param>
-  </block>
-  <block>
-    <key>parameter</key>
-    <param>
-      <key>alias</key>
-      <value></value>
-    </param>
-    <param>
-      <key>comment</key>
-      <value></value>
-    </param>
-    <param>
-      <key>_enabled</key>
-      <value>True</value>
-    </param>
-    <param>
-      <key>_coordinate</key>
-      <value>(208, 880)</value>
-    </param>
-    <param>
-      <key>_rotation</key>
-      <value>0</value>
-    </param>
-    <param>
-      <key>id</key>
-      <value>minsmear</value>
-    </param>
-    <param>
-      <key>label</key>
-      <value>Minimum smear threshold, seconds</value>
-    </param>
-    <param>
-      <key>short_id</key>
-      <value></value>
-    </param>
-    <param>
-      <key>hide</key>
-      <value>none</value>
-    </param>
-    <param>
-      <key>type</key>
-      <value>eng_float</value>
-    </param>
-    <param>
-      <key>value</key>
-      <value>2.5e-3</value>
     </param>
   </block>
   <block>
@@ -2572,6 +2699,53 @@ to vector internally</value>
     </param>
     <param>
       <key>_coordinate</key>
+      <value>(968, 896)</value>
+    </param>
+    <param>
+      <key>_rotation</key>
+      <value>0</value>
+    </param>
+    <param>
+      <key>id</key>
+      <value>sky</value>
+    </param>
+    <param>
+      <key>label</key>
+      <value>Sky Frequency if different from tuned freq</value>
+    </param>
+    <param>
+      <key>short_id</key>
+      <value></value>
+    </param>
+    <param>
+      <key>hide</key>
+      <value>none</value>
+    </param>
+    <param>
+      <key>type</key>
+      <value>eng_float</value>
+    </param>
+    <param>
+      <key>value</key>
+      <value>0.0</value>
+    </param>
+  </block>
+  <block>
+    <key>parameter</key>
+    <param>
+      <key>alias</key>
+      <value></value>
+    </param>
+    <param>
+      <key>comment</key>
+      <value></value>
+    </param>
+    <param>
+      <key>_enabled</key>
+      <value>True</value>
+    </param>
+    <param>
+      <key>_coordinate</key>
       <value>(352, 792)</value>
     </param>
     <param>
@@ -2647,7 +2821,7 @@ to vector internally</value>
     </param>
     <param>
       <key>value</key>
-      <value>3.5</value>
+      <value>2.75</value>
     </param>
   </block>
   <connection>

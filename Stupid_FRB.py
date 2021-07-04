@@ -30,14 +30,27 @@ class blk(gr.sync_block):  # other base classes are basic_block, decim_block, in
         # if an attribute with the same name as a parameter is found,
         # a callback is registered (properties work, too).
         
+        #
+        # We create a "work queue" of preliminary events
+        #  The dequeue worker does further analysis before
+        #  logging the event.
         self.aQueue = Queue.Queue(maxsize=16)
         self.filename = filename
+        
+        #
+        # we (somewhat arbitrarily) inspect a two-second window of
+        #  channel data looking for pulses
+        #
         self.two_seconds = int(fbrate*2)
         self.channels=[]
         self.chans = chans
         self.lchans = len(chans)
         self.declination = declination
         self.scnt = 0
+        #
+        # The minimum time distance for detected
+        #  pulses between the lowest and highest frequency
+        #
         self.mindistance = minsmear * float(fbrate)
         self.mindistance = int(self.mindistance)
         for x in range(fbsize):
@@ -46,6 +59,11 @@ class blk(gr.sync_block):  # other base classes are basic_block, decim_block, in
         self.thresh = thresh
         self.flen = fbsize
 
+    #
+    # Log an event
+    #
+    # We basically log the entire two-second channel buffer
+    #
     def logthispuppy(self,chans,evt):
         q = self.thresh
         ltp = evt
