@@ -47,6 +47,8 @@ class blk(gr.sync_block):  # other base classes are basic_block, decim_block, in
         self.lchans = len(chans)
         self.declination = declination
         self.scnt = 0
+        self.fbsize = fbsize
+        self.fbrate = fbrate
         #
         # The minimum time distance for detected
         #  pulses between the lowest and highest frequency
@@ -66,7 +68,8 @@ class blk(gr.sync_block):  # other base classes are basic_block, decim_block, in
     #
     def logthispuppy(self,chans,evt):
         q = self.thresh
-        ltp = evt
+        ltp = time.gmtime(evt)
+        frac = evt-float(int(evt))
         declination = -99.00
         if (isinstance(self.declination, str) == True):
             if (os.path.isfile(self.declination)):
@@ -82,8 +85,8 @@ class blk(gr.sync_block):  # other base classes are basic_block, decim_block, in
         else:
             declination = float(self.declination)
         fn = self.filename+"-"
-        fn = fn + "%7.2f-%04d%02d%02d.%02d%02d" % (declination, ltp.tm_year, ltp.tm_mon,
-            ltp.tm_mday, ltp.tm_hour, ltp.tm_min)
+        fn = fn + "%7.2f-%04d%02d%02d_%02d%02d%05.3f" % (declination, ltp.tm_year, ltp.tm_mon,
+            ltp.tm_mday, ltp.tm_hour, ltp.tm_min, float(ltp.tm_sec)+frac)
         fp = open (fn+".dat", "w")
         for c in range(self.lchans):
             fp.write (str(chans[c])+"\n")
@@ -102,7 +105,6 @@ class blk(gr.sync_block):  # other base classes are basic_block, decim_block, in
                     goodcnt += 1
             if (goodcnt == self.lchans):
                 self.logthispuppy(item["data"],item["time"])
-            return 1
 
     def work(self, input_items, output_items):
         """Do dedispersion/folding"""
@@ -151,7 +153,15 @@ class blk(gr.sync_block):  # other base classes are basic_block, decim_block, in
                             #
                             d = {}
                             d["data"] = copy.deepcopy(self.channels)
-                            d["time"] = time.gmtime()   
+                            t = time.time()
+                            #
+                            # Adjust timestamp for pulse location within
+                            #  the 2-second window.  This is only very
+                            #  approximate.  But potentially allows better
+                            #  coordination to other observatories.
+                            #
+                            t -= (self.amusingplaces[0]*(1.0/self.fbrate))
+                            d["time"] = t
                             self.aQueue.put(d)
                 self.scnt = 0
 
