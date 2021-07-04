@@ -13,12 +13,13 @@ import json
 import math
 import Queue
 import copy
+import os
 
 class blk(gr.sync_block):  # other base classes are basic_block, decim_block, interp_block
     """A FRB first-order detector block"""
 
     def __init__(self, fbsize=16,filename='/dev/null',fbrate=2500,chans=[1,7,14],
-        thresh=5.0,minsmear=2.5e-3):  # only default arguments here
+        thresh=5.0,minsmear=2.5e-3,declination=0.0):  # only default arguments here
         """arguments to this function show up as parameters in GRC"""
         gr.sync_block.__init__(
             self,
@@ -35,6 +36,7 @@ class blk(gr.sync_block):  # other base classes are basic_block, decim_block, in
         self.channels=[]
         self.chans = chans
         self.lchans = len(chans)
+        self.declination = declination
         self.scnt = 0
         self.mindistance = minsmear * float(fbrate)
         self.mindistance = int(self.mindistance)
@@ -44,11 +46,25 @@ class blk(gr.sync_block):  # other base classes are basic_block, decim_block, in
         self.thresh = thresh
         self.flen = fbsize
 
-    def logthispuppy(self,chans):
+    def logthispuppy(self,chans,evt):
         q = self.thresh
-        ltp = time.gmtime()
+        ltp = evt
+        declination = -99.00
+        if (isinstance(self.declination, str) == True):
+            if (os.path.isfile(self.declination)):
+                f = open(self.declination, "r")
+                dstr=f.readline()
+                f.close()
+                declination = float(dstr)
+            else:
+                try:
+                    declination = float(self.declination)
+                except:
+                    declination = -99.00
+        else:
+            declination = float(self.declination)
         fn = self.filename+"-"
-        fn = fn + "%04d%02d%02d.%02d%02d" % (ltp.tm_year, ltp.tm_mon,
+        fn = fn + "%7.2f-%04d%02d%02d.%02d%02d" % (declination, ltp.tm_year, ltp.tm_mon,
             ltp.tm_mday, ltp.tm_hour, ltp.tm_min)
         fp = open (fn+".dat", "w")
         for c in range(self.lchans):
@@ -56,19 +72,19 @@ class blk(gr.sync_block):  # other base classes are basic_block, decim_block, in
         fp.close()
     
     def doAnalysis(self):
-		if (self.aQueue.empty()):
-			return None
-		else:
-			item = self.aQueue.get()
-			goodcnt = 0
-			for chan in item["data"]:
-				avg = np.mean(chan)
-				mx = np.max(chan)
-				if (mx > avg*self.thresh):
-					goodcnt += 1
-			if (goodcnt == self.lchans):
-				self.logthispuppy(item[data])
-			return 1
+        if (self.aQueue.empty()):
+            return None
+        else:
+            item = self.aQueue.get()
+            goodcnt = 0
+            for chan in item["data"]:
+                avg = np.mean(chan)
+                mx = np.max(chan)
+                if (mx > avg*self.thresh):
+                    goodcnt += 1
+            if (goodcnt == self.lchans):
+                self.logthispuppy(item["data"],item["time"])
+            return 1
 
     def work(self, input_items, output_items):
         """Do dedispersion/folding"""
@@ -112,13 +128,13 @@ class blk(gr.sync_block):  # other base classes are basic_block, decim_block, in
                     #
                     if (amusingplaces[0] > amusingplaces[len(amusingplaces)-1] and
                         (amusingplaces[0] - amusingplaces[len(amusingplaces)-1]) > self.mindistance):
-							#
-							# Place this on a deeper-analysis queue
-							#
-							d = {}
-							d["data"] = copy.deepcopy(self.channels)
-							d["time"] = time.gmtime()   
-							self.aQueue.put(d)
+                            #
+                            # Place this on a deeper-analysis queue
+                            #
+                            d = {}
+                            d["data"] = copy.deepcopy(self.channels)
+                            d["time"] = time.gmtime()   
+                            self.aQueue.put(d)
                 self.scnt = 0
 
         return len(q)
