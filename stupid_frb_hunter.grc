@@ -1208,7 +1208,7 @@ to vector internally</value>
     </param>
     <param>
       <key>bw0</key>
-      <value>0</value>
+      <value>samp_rate*0.8</value>
     </param>
     <param>
       <key>dc_offset_mode0</key>
