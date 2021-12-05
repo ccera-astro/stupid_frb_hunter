@@ -11,15 +11,16 @@ from gnuradio import gr
 import time
 import json
 import math
-import Queue
+import queue
 import copy
 import os
+import random
 
 class blk(gr.sync_block):  # other base classes are basic_block, decim_block, interp_block
     """A FRB first-order detector block"""
 
     def __init__(self, fbsize=16,filename='/dev/null',fbrate=2500,chans=[1,7,14],
-        thresh=5.0,minsmear=2.5e-3,declination=0.0):  # only default arguments here
+        thresh=5.0,minsmear=2.5e-3,declination=0.0,fake=False):  # only default arguments here
         """arguments to this function show up as parameters in GRC"""
         gr.sync_block.__init__(
             self,
@@ -34,7 +35,7 @@ class blk(gr.sync_block):  # other base classes are basic_block, decim_block, in
         # We create a "work queue" of preliminary events
         #  The dequeue worker does further analysis before
         #  logging the event.
-        self.aQueue = Queue.Queue(maxsize=16)
+        self.aQueue = queue.Queue(maxsize=16)
         self.filename = filename
         
         #
@@ -49,6 +50,7 @@ class blk(gr.sync_block):  # other base classes are basic_block, decim_block, in
         self.scnt = 0
         self.fbsize = fbsize
         self.fbrate = fbrate
+        self.fake = fake
         #
         # The minimum time distance for detected
         #  pulses between the lowest and highest frequency
@@ -103,7 +105,7 @@ class blk(gr.sync_block):  # other base classes are basic_block, decim_block, in
                 mx = np.max(chan)
                 if (mx > avg*self.thresh):
                     goodcnt += 1
-            if (goodcnt == self.lchans):
+            if (goodcnt >= self.lchans):
                 self.logthispuppy(item["data"],item["time"])
 
     def work(self, input_items, output_items):
@@ -120,6 +122,10 @@ class blk(gr.sync_block):  # other base classes are basic_block, decim_block, in
                 # Analysis
                 amused = 0
                 amusingplaces = []
+                dofake = False
+                if (self.fake == True and (random.randint(0,100) == 1)):
+                    dofake = True
+                
                 #
                 # For each of the "test" (amusing) channels
                 #
@@ -140,14 +146,14 @@ class blk(gr.sync_block):  # other base classes are basic_block, decim_block, in
                 #
                 # Only if we were amused in all amusing places
                 #
-                if (amused >= self.lchans):
+                if (dofake == True or (amused >= self.lchans)):
                     #
                     # Spike on lower-frequency channel must occur *after*
                     #  higher-frequency channel. Difference in positions
                     #  must be "significant"
                     #
-                    if (amusingplaces[0] > amusingplaces[len(amusingplaces)-1] and
-                        (amusingplaces[0] - amusingplaces[len(amusingplaces)-1]) > self.mindistance):
+                    if (dofake == True or (amusingplaces[0] > amusingplaces[len(amusingplaces)-1] and
+                        (amusingplaces[0] - amusingplaces[len(amusingplaces)-1]) >= self.mindistance)):
                             #
                             # Place this on a deeper-analysis queue
                             #
@@ -160,8 +166,10 @@ class blk(gr.sync_block):  # other base classes are basic_block, decim_block, in
                             #  approximate.  But potentially allows better
                             #  coordination to other observatories.
                             #
-                            t -= (self.amusingplaces[0]*(1.0/self.fbrate))
+                            if (len(amusingplaces) > 0):
+                                t -= (amusingplaces[0]*(1.0/self.fbrate))
                             d["time"] = t
+                            #print ("Enqueing work at %s" % time.ctime())
                             self.aQueue.put(d)
                 self.scnt = 0
 
