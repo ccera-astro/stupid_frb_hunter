@@ -204,28 +204,30 @@ blocks:
       \       fp.close()\n    \n    def doAnalysis(self):\n        if (self.aQueue.empty()):\n\
       \            return None\n        else:\n            item = self.aQueue.get()\n\
       \            goodcnt = 0\n            for chan in item[\"data\"]:\n        \
-      \        avg = np.mean(chan)\n                mx = np.max(chan)\n          \
-      \      if (mx > avg*self.thresh):\n                    goodcnt += 1\n      \
-      \      if (goodcnt >= self.lchans):\n                self.logthispuppy(item[\"\
-      data\"],item[\"time\"])\n\n    def work(self, input_items, output_items):\n\
-      \        \"\"\"Do dedispersion/folding\"\"\"\n        q = input_items[0]\n \
-      \       l = len(q)\n        for i in range(int(l/self.flen)):\n            bndx\
-      \ = i*self.flen\n            for c in range(self.flen):\n                self.channels[c][self.scnt]\
-      \ = q[bndx]\n                bndx += 1\n            self.scnt += 1\n       \
-      \     if (self.scnt >= self.two_seconds):\n                # Analysis\n    \
-      \            amused = 0\n                amusingplaces = []\n              \
-      \  dofake = False\n                if (self.fake == True and (random.randint(0,100)\
-      \ == 1)):\n                    dofake = True\n                \n           \
-      \     #\n                # For each of the \"test\" (amusing) channels\n   \
-      \             #\n                # Test for a spike that is \"big\" compared\
-      \ to mean\n                #  in each of the \"test\" channels\n           \
-      \     #\n                for amusing in self.chans:\n                    #\n\
-      \                    # Channel average\n                    #\n            \
-      \        cavg = np.mean(self.channels[amusing])\n                    if ((np.max(self.channels[amusing]))\
-      \ / cavg > self.thresh):\n                        amused += 1\n            \
-      \            amusingplaces.append(np.argmax(self.channels[amusing]))\n     \
-      \               else:\n                        break\n                \n   \
-      \             #\n                # Only if we were amused in all amusing places\n\
+      \        avg = np.mean(chan)\n                std = np.std(chan)\n         \
+      \       mx = np.max(chan)\n                if ((mx-avg) > std*self.thresh):\n\
+      \                    goodcnt += 1\n            if (goodcnt >= self.lchans):\n\
+      \                self.logthispuppy(item[\"data\"],item[\"time\"])\n\n    def\
+      \ work(self, input_items, output_items):\n        \"\"\"Do dedispersion/folding\"\
+      \"\"\n        q = input_items[0]\n        l = len(q)\n        for i in range(int(l/self.flen)):\n\
+      \            bndx = i*self.flen\n            for c in range(self.flen):\n  \
+      \              self.channels[c][self.scnt] = q[bndx]\n                bndx +=\
+      \ 1\n            self.scnt += 1\n            if (self.scnt >= self.two_seconds):\n\
+      \                # Analysis\n                amused = 0\n                amusingplaces\
+      \ = []\n                dofake = False\n                if (self.fake == True\
+      \ and (random.randint(0,100) == 1)):\n                    dofake = True\n  \
+      \              \n                #\n                # For each of the \"test\"\
+      \ (amusing) channels\n                #\n                # Test for a spike\
+      \ that is \"big\" compared to mean\n                #  in each of the \"test\"\
+      \ channels\n                #\n                for amusing in self.chans:\n\
+      \                    #\n                    # Channel average\n            \
+      \        #\n                    cavg = np.mean(self.channels[amusing])\n   \
+      \                 cstd = np.std(self.channels[amusing])\n                  \
+      \  mx = np.max(self.channels[amusing])\n                    if ((mx-cavg) >\
+      \ cstd*self.thresh):\n                        amused += 1\n                \
+      \        amusingplaces.append(np.argmax(self.channels[amusing]))\n         \
+      \           else:\n                        break\n                \n       \
+      \         #\n                # Only if we were amused in all amusing places\n\
       \                #\n                if (dofake == True or (amused >= self.lchans)):\n\
       \                    #\n                    # Spike on lower-frequency channel\
       \ must occur *after*\n                    #  higher-frequency channel. Difference\

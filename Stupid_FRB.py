@@ -102,8 +102,9 @@ class blk(gr.sync_block):  # other base classes are basic_block, decim_block, in
             goodcnt = 0
             for chan in item["data"]:
                 avg = np.mean(chan)
+                std = np.std(chan)
                 mx = np.max(chan)
-                if (mx > avg*self.thresh):
+                if ((mx-avg) > std*self.thresh):
                     goodcnt += 1
             if (goodcnt >= self.lchans):
                 self.logthispuppy(item["data"],item["time"])
@@ -137,7 +138,9 @@ class blk(gr.sync_block):  # other base classes are basic_block, decim_block, in
                     # Channel average
                     #
                     cavg = np.mean(self.channels[amusing])
-                    if ((np.max(self.channels[amusing])) / cavg > self.thresh):
+                    cstd = np.std(self.channels[amusing])
+                    mx = np.max(self.channels[amusing])
+                    if ((mx-cavg) > cstd*self.thresh):
                         amused += 1
                         amusingplaces.append(np.argmax(self.channels[amusing]))
                     else:
