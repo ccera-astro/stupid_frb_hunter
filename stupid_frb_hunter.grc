@@ -76,7 +76,7 @@ blocks:
   id: variable
   parameters:
     comment: ''
-    value: '5000'
+    value: '2500'
   states:
     bus_sink: false
     bus_source: false
