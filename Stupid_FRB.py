@@ -109,18 +109,6 @@ class blk(gr.sync_block):  # other base classes are basic_block, decim_block, in
             if (goodcnt >= self.lchans):
                 self.logthispuppy(item["data"],item["time"])
                 
-    def test_indices(self,indices):
-		
-		#
-		# We want to test that all indices are returned in
-		#   descending order
-		#
-        for x in range(len(indices)-1):
-            if (indices[x] <= indices[x+1]):
-                return False
-        return True
-            
-
     def work(self, input_items, output_items):
         """Do dedispersion/folding"""
         q = input_items[0]
@@ -167,7 +155,7 @@ class blk(gr.sync_block):  # other base classes are basic_block, decim_block, in
                     #  higher-frequency channel. Difference in positions
                     #  must be "significant"
                     #
-                    if (dofake == True or self.test_indices(self,amusingplaces) == True):
+                    if (dofake == True or (amusingplaces == sorted(amusingplaces,reverse=True))):
                             #
                             # Place this on a deeper-analysis queue
                             #
