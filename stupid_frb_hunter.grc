@@ -76,7 +76,7 @@ blocks:
   id: variable
   parameters:
     comment: ''
-    value: '2500'
+    value: '2000'
   states:
     bus_sink: false
     bus_source: false
@@ -178,25 +178,25 @@ blocks:
       \        #  logging the event.\n        self.aQueue = queue.Queue(maxsize=16)\n\
       \        self.filename = filename\n        \n        #\n        # we (somewhat\
       \ arbitrarily) inspect a two-second window of\n        #  channel data looking\
-      \ for pulses\n        #\n        self.two_seconds = int(fbrate*2)\n        self.channels=[]\n\
-      \        self.chans = chans\n        self.lchans = len(chans)\n        self.declination\
-      \ = declination\n        self.scnt = 0\n        self.fbsize = fbsize\n     \
-      \   self.fbrate = fbrate\n        self.fake = fake\n        #\n        # The\
-      \ minimum time distance for detected\n        #  pulses between the lowest and\
-      \ highest frequency\n        #\n        self.mindistance = minsmear * float(fbrate)\n\
-      \        self.mindistance = int(self.mindistance)\n        for x in range(fbsize):\n\
-      \            self.channels.append([0.0]*self.two_seconds)\n            \n  \
-      \      self.thresh = thresh\n        self.flen = fbsize\n\n    #\n    # Log\
-      \ an event\n    #\n    # We basically log the entire two-second channel buffer\n\
-      \    #\n    def logthispuppy(self,chans,evt):\n        q = self.thresh\n   \
-      \     ltp = time.gmtime(evt)\n        frac = evt-float(int(evt))\n        declination\
-      \ = -99.00\n        if (isinstance(self.declination, str) == True):\n      \
-      \      if (os.path.isfile(self.declination)):\n                f = open(self.declination,\
-      \ \"r\")\n                dstr=f.readline()\n                f.close()\n   \
-      \             declination = float(dstr)\n            else:\n               \
-      \ try:\n                    declination = float(self.declination)\n        \
-      \        except:\n                    declination = -99.00\n        else:\n\
-      \            declination = float(self.declination)\n        fn = self.filename+\"\
+      \ for pulses\n        #\n        self.two_seconds = int(fbrate*1.5)\n      \
+      \  self.channels=[]\n        self.chans = chans\n        self.lchans = len(chans)\n\
+      \        self.declination = declination\n        self.scnt = 0\n        self.fbsize\
+      \ = fbsize\n        self.fbrate = fbrate\n        self.fake = fake\n       \
+      \ #\n        # The minimum time distance for detected\n        #  pulses between\
+      \ the lowest and highest frequency\n        #\n        self.mindistance = minsmear\
+      \ * float(fbrate)\n        self.mindistance = int(self.mindistance)\n      \
+      \  for x in range(fbsize):\n            self.channels.append([0.0]*self.two_seconds)\n\
+      \            \n        self.thresh = thresh\n        self.flen = fbsize\n\n\
+      \    #\n    # Log an event\n    #\n    # We basically log the entire two-second\
+      \ channel buffer\n    #\n    def logthispuppy(self,chans,evt):\n        q =\
+      \ self.thresh\n        ltp = time.gmtime(evt)\n        frac = evt-float(int(evt))\n\
+      \        declination = -99.00\n        if (isinstance(self.declination, str)\
+      \ == True):\n            if (os.path.isfile(self.declination)):\n          \
+      \      f = open(self.declination, \"r\")\n                dstr=f.readline()\n\
+      \                f.close()\n                declination = float(dstr)\n    \
+      \        else:\n                try:\n                    declination = float(self.declination)\n\
+      \                except:\n                    declination = -99.00\n       \
+      \ else:\n            declination = float(self.declination)\n        fn = self.filename+\"\
       -\"\n        fn = fn + \"%-5.1f-%04d%02d%02d-%02d%02d%05.3f\" % (declination,\
       \ ltp.tm_year, ltp.tm_mon,\n            ltp.tm_mday, ltp.tm_hour, ltp.tm_min,\
       \ float(ltp.tm_sec)+frac)\n        fp = open (fn+\".dat\", \"w\")\n        for\

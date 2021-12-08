@@ -42,7 +42,7 @@ class blk(gr.sync_block):  # other base classes are basic_block, decim_block, in
         # we (somewhat arbitrarily) inspect a two-second window of
         #  channel data looking for pulses
         #
-        self.two_seconds = int(fbrate*2)
+        self.two_seconds = int(fbrate*1.5)
         self.channels=[]
         self.chans = chans
         self.lchans = len(chans)
