@@ -207,7 +207,11 @@ blocks:
       \        avg = np.mean(chan)\n                std = np.std(chan)\n         \
       \       mx = np.max(chan)\n                if ((mx-avg) > std*self.thresh):\n\
       \                    goodcnt += 1\n            if (goodcnt >= self.lchans):\n\
-      \                self.logthispuppy(item[\"data\"],item[\"time\"])\n\n    def\
+      \                self.logthispuppy(item[\"data\"],item[\"time\"])\n        \
+      \        \n    def test_indices(self,indices):\n\t\t\n\t\t#\n\t\t# We want to\
+      \ test that all indices are returned in\n\t\t#   descending order\n\t\t#\n \
+      \       for x in range(len(indices)-1):\n            if (indices[x] <= indices[x+1]):\n\
+      \                return False\n        return True\n            \n\n    def\
       \ work(self, input_items, output_items):\n        \"\"\"Do dedispersion/folding\"\
       \"\"\n        q = input_items[0]\n        l = len(q)\n        for i in range(int(l/self.flen)):\n\
       \            bndx = i*self.flen\n            for c in range(self.flen):\n  \
@@ -232,17 +236,16 @@ blocks:
       \                    #\n                    # Spike on lower-frequency channel\
       \ must occur *after*\n                    #  higher-frequency channel. Difference\
       \ in positions\n                    #  must be \"significant\"\n           \
-      \         #\n                    if (dofake == True or (amusingplaces[0] > amusingplaces[len(amusingplaces)-1]\
-      \ and\n                        (amusingplaces[0] - amusingplaces[len(amusingplaces)-1])\
-      \ >= self.mindistance)):\n                            #\n                  \
-      \          # Place this on a deeper-analysis queue\n                       \
-      \     #\n                            d = {}\n                            d[\"\
-      data\"] = copy.deepcopy(self.channels)\n                            t = time.time()\n\
-      \                            #\n                            # Adjust timestamp\
-      \ for pulse location within\n                            #  the 2-second window.\
-      \  This is only very\n                            #  approximate.  But potentially\
-      \ allows better\n                            #  coordination to other observatories.\n\
-      \                            #\n                            if (len(amusingplaces)\
+      \         #\n                    if (dofake == True or self.test_indices(self,amusingplaces)\
+      \ == True):\n                            #\n                            # Place\
+      \ this on a deeper-analysis queue\n                            #\n         \
+      \                   d = {}\n                            d[\"data\"] = copy.deepcopy(self.channels)\n\
+      \                            t = time.time()\n                            #\n\
+      \                            # Adjust timestamp for pulse location within\n\
+      \                            #  the 2-second window.  This is only very\n  \
+      \                          #  approximate.  But potentially allows better\n\
+      \                            #  coordination to other observatories.\n     \
+      \                       #\n                            if (len(amusingplaces)\
       \ > 0):\n                                t -= (amusingplaces[0]*(1.0/self.fbrate))\n\
       \                            d[\"time\"] = t\n                            #print\
       \ (\"Enqueing work at %s\" % time.ctime())\n                            self.aQueue.put(d)\n\
