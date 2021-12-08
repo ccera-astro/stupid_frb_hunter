@@ -233,18 +233,19 @@ blocks:
       \ channel must occur *after*\n                    #  higher-frequency channel.\
       \ Difference in positions\n                    #  must be \"significant\"\n\
       \                    #\n                    if (dofake == True or (amusingplaces\
-      \ == sorted(amusingplaces,reverse=True))):\n                            #\n\
-      \                            # Place this on a deeper-analysis queue\n     \
-      \                       #\n                            d = {}\n            \
-      \                d[\"data\"] = copy.deepcopy(self.channels)\n              \
-      \              t = time.time()\n                            #\n            \
-      \                # Adjust timestamp for pulse location within\n            \
-      \                #  the 2-second window.  This is only very\n              \
-      \              #  approximate.  But potentially allows better\n            \
-      \                #  coordination to other observatories.\n                 \
-      \           #\n                            if (len(amusingplaces) > 0):\n  \
-      \                              t -= (amusingplaces[0]*(1.0/self.fbrate))\n \
-      \                           d[\"time\"] = t\n                            #print\
+      \ == sorted(amusingplaces,reverse=True))):\n                        lx = len(amusingplaces)-1\n\
+      \                        if ((amusingplaces[0] - amusingplaces[lx]) >= self.mindistance):\n\
+      \                            #\n                            # Place this on\
+      \ a deeper-analysis queue\n                            #\n                 \
+      \           d = {}\n                            d[\"data\"] = copy.deepcopy(self.channels)\n\
+      \                            t = time.time()\n                            #\n\
+      \                            # Adjust timestamp for pulse location within\n\
+      \                            #  the 2-second window.  This is only very\n  \
+      \                          #  approximate.  But potentially allows better\n\
+      \                            #  coordination to other observatories.\n     \
+      \                       #\n                            if (len(amusingplaces)\
+      \ > 0):\n                                t -= (amusingplaces[0]*(1.0/self.fbrate))\n\
+      \                            d[\"time\"] = t\n                            #print\
       \ (\"Enqueing work at %s\" % time.ctime())\n                            self.aQueue.put(d)\n\
       \                self.scnt = 0\n\n        return len(q)\n"
     affinity: ''

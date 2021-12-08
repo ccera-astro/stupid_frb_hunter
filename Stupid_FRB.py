@@ -156,6 +156,8 @@ class blk(gr.sync_block):  # other base classes are basic_block, decim_block, in
                     #  must be "significant"
                     #
                     if (dofake == True or (amusingplaces == sorted(amusingplaces,reverse=True))):
+                        lx = len(amusingplaces)-1
+                        if ((amusingplaces[0] - amusingplaces[lx]) >= self.mindistance):
                             #
                             # Place this on a deeper-analysis queue
                             #
