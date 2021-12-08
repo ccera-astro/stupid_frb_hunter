@@ -87,7 +87,7 @@ class blk(gr.sync_block):  # other base classes are basic_block, decim_block, in
         else:
             declination = float(self.declination)
         fn = self.filename+"-"
-        fn = fn + "%7.2f-%04d%02d%02d_%02d%02d%05.3f" % (declination, ltp.tm_year, ltp.tm_mon,
+        fn = fn + "%-5.1f-%04d%02d%02d-%02d%02d%05.3f" % (declination, ltp.tm_year, ltp.tm_mon,
             ltp.tm_mday, ltp.tm_hour, ltp.tm_min, float(ltp.tm_sec)+frac)
         fp = open (fn+".dat", "w")
         for c in range(self.lchans):
