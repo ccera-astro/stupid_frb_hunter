@@ -94,54 +94,75 @@ class blk(gr.sync_block):  # other base classes are basic_block, decim_block, in
             fp.write (str(chans[c])+"\n")
         fp.close()
     
+    #
+    # This is now largely a no-op except for logging.
+    #
     def doAnalysis(self):
         if (self.aQueue.empty()):
             return None
         else:
-            item = self.aQueue.get()
-            goodcnt = 0
-            for chan in item["data"]:
-                avg = np.mean(chan)
-                std = np.std(chan)
-                mx = np.max(chan)
-                if ((mx-avg) > std*self.thresh):
-                    goodcnt += 1
-            if (goodcnt >= self.lchans):
-                self.logthispuppy(item["data"],item["time"])
+            self.logthispuppy(item["data"],item["time"])
                 
     def work(self, input_items, output_items):
         """Do dedispersion/folding"""
         q = input_items[0]
         l = len(q)
+        bndx = 0
         for i in range(int(l/self.flen)):
-            bndx = i*self.flen
+			#
+			# For each channel
+			#
             for c in range(self.flen):
+				#
+				# Add one sample to current channel
+				#
                 self.channels[c][self.scnt] = q[bndx]
                 bndx += 1
+            #
+            # Once there are "enough" samples in the channels, do analysis
+            #
             self.scnt += 1
+            
+            #
+            # Each channel now has "two_seconds" (actually 1.5 right now) worth of samples in it
+            #
             if (self.scnt >= self.two_seconds):
                 # Analysis
                 amused = 0
                 amusingplaces = []
-                dofake = False
-                if (self.fake == True and (random.randint(0,100) == 1)):
-                    dofake = True
                 
                 #
                 # For each of the "test" (amusing) channels
                 #
                 # Test for a spike that is "big" compared to mean
-                #  in each of the "test" channels
+                #  in each of the "test" channels.  We use
+                #  standard deviation and the "thresh" parameter
+                #  to determine if spike is big enough
                 #
                 for amusing in self.chans:
                     #
                     # Channel average
                     #
                     cavg = np.mean(self.channels[amusing])
+                    
+                    #
+                    # Channel STD
+                    #
                     cstd = np.std(self.channels[amusing])
+                    
+                    #
+                    # Find MAX in this channel
+                    #
                     mx = np.max(self.channels[amusing])
+                    
+                    #
+                    # How many sigma is max?
+                    #
                     if ((mx-cavg) > cstd*self.thresh):
                         amused += 1
+                        #
+                        # Record location in the channel data
+                        #
                         amusingplaces.append(np.argmax(self.channels[amusing]))
                     else:
                         break
@@ -149,14 +170,29 @@ class blk(gr.sync_block):  # other base classes are basic_block, decim_block, in
                 #
                 # Only if we were amused in all amusing places
                 #
-                if (dofake == True or (amused >= self.lchans)):
+                # On init we're giving a list of channels to inspect
+                #  (or "be amused by").
+                #
+                # If we are amused (spike exceeds threshold) in all those channels
+                #   do further analysis
+                #
+                if (amused >= self.lchans):
                     #
                     # Spike on lower-frequency channel must occur *after*
                     #  higher-frequency channel. Difference in positions
-                    #  must be "significant"
+                    #  must be "significant".
                     #
-                    if (dofake == True or (amusingplaces == sorted(amusingplaces,reverse=True))):
+                    # Because FRBs are dispersed, just like pulsars, the low-frequency channel
+                    #  should be *later* than the higher-frequency channels.  We simply
+                    #  use "sorted()" to enforce this rough ordering constraint.
+                    #
+                    if (amusingplaces == sorted(amusingplaces,reverse=True)):
                         lx = len(amusingplaces)-1
+                        #
+                        # Now, the distance (in samples) between the lowest frequency spike
+                        #  and the highest must be > the minimum smear time implied by the
+                        #  DM given on input to the program (and passed to use on init).
+                        #
                         if ((amusingplaces[0] - amusingplaces[lx]) >= self.mindistance):
                             #
                             # Place this on a deeper-analysis queue
@@ -173,7 +209,6 @@ class blk(gr.sync_block):  # other base classes are basic_block, decim_block, in
                             if (len(amusingplaces) > 0):
                                 t -= (amusingplaces[0]*(1.0/self.fbrate))
                             d["time"] = t
-                            #print ("Enqueing work at %s" % time.ctime())
                             self.aQueue.put(d)
                 self.scnt = 0
 
