@@ -203,31 +203,33 @@ blocks:
       \ c in range(self.lchans):\n            fp.write (str(chans[c])+\"\\n\")\n \
       \       fp.close()\n    \n    #\n    # This is now largely a no-op except for\
       \ logging.\n    #\n    def doAnalysis(self):\n        if (self.aQueue.empty()):\n\
-      \            return None\n        else:\n            self.logthispuppy(item[\"\
-      data\"],item[\"time\"])\n                \n    def work(self, input_items, output_items):\n\
-      \        \"\"\"Do dedispersion/folding\"\"\"\n        q = input_items[0]\n \
-      \       l = len(q)\n        bndx = 0\n        for i in range(int(l/self.flen)):\n\
-      \t\t\t#\n\t\t\t# For each channel\n\t\t\t#\n            for c in range(self.flen):\n\
-      \t\t\t\t#\n\t\t\t\t# Add one sample to current channel\n\t\t\t\t#\n        \
-      \        self.channels[c][self.scnt] = q[bndx]\n                bndx += 1\n\
-      \            #\n            # Once there are \"enough\" samples in the channels,\
-      \ do analysis\n            #\n            self.scnt += 1\n            \n   \
-      \         #\n            # Each channel now has \"two_seconds\" (actually 1.5\
-      \ right now) worth of samples in it\n            #\n            if (self.scnt\
-      \ >= self.two_seconds):\n                # Analysis\n                amused\
-      \ = 0\n                amusingplaces = []\n                \n              \
-      \  #\n                # For each of the \"test\" (amusing) channels\n      \
-      \          #\n                # Test for a spike that is \"big\" compared to\
-      \ mean\n                #  in each of the \"test\" channels.  We use\n     \
-      \           #  standard deviation and the \"thresh\" parameter\n           \
-      \     #  to determine if spike is big enough\n                #\n          \
-      \      for amusing in self.chans:\n                    #\n                 \
-      \   # Channel average\n                    #\n                    cavg = np.mean(self.channels[amusing])\n\
-      \                    \n                    #\n                    # Channel\
-      \ STD\n                    #\n                    cstd = np.std(self.channels[amusing])\n\
-      \                    \n                    #\n                    # Find MAX\
-      \ in this channel\n                    #\n                    mx = np.max(self.channels[amusing])\n\
-      \                    \n                    #\n                    # How many\
+      \            return None\n        else:\n            item = self.aQueue.get()\n\
+      \            self.logthispuppy(item[\"data\"],item[\"time\"])\n            \
+      \    \n    def work(self, input_items, output_items):\n        \"\"\"Do dedispersion/folding\"\
+      \"\"\n        q = input_items[0]\n        l = len(q)\n        bndx = 0\n   \
+      \     for i in range(int(l/self.flen)):\n            #\n            # For each\
+      \ channel\n            #\n            for c in range(self.flen):\n         \
+      \       #\n                # Add one sample to current channel\n           \
+      \     #\n                self.channels[c][self.scnt] = q[bndx]\n           \
+      \     bndx += 1\n            #\n            # Once there are \"enough\" samples\
+      \ in the channels, do analysis\n            #\n            self.scnt += 1\n\
+      \            \n            #\n            # Each channel now has \"two_seconds\"\
+      \ (actually 1.5 right now) worth of samples in it\n            #\n         \
+      \   if (self.scnt >= self.two_seconds):\n                # Analysis\n      \
+      \          amused = 0\n                amusingplaces = []\n                \n\
+      \                #\n                # For each of the \"test\" (amusing) channels\n\
+      \                #\n                # Test for a spike that is \"big\" compared\
+      \ to mean\n                #  in each of the \"test\" channels.  We use\n  \
+      \              #  standard deviation and the \"thresh\" parameter\n        \
+      \        #  to determine if spike is big enough\n                #\n       \
+      \         for amusing in self.chans:\n                    #\n              \
+      \      # Channel average\n                    #\n                    cavg =\
+      \ np.mean(self.channels[amusing])\n                    \n                  \
+      \  #\n                    # Channel STD\n                    #\n           \
+      \         cstd = np.std(self.channels[amusing])\n                    \n    \
+      \                #\n                    # Find MAX in this channel\n       \
+      \             #\n                    mx = np.max(self.channels[amusing])\n \
+      \                   \n                    #\n                    # How many\
       \ sigma is max?\n                    #\n                    if ((mx-cavg) >\
       \ cstd*self.thresh):\n                        amused += 1\n                \
       \        #\n                        # Record location in the channel data\n\

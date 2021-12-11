@@ -101,6 +101,7 @@ class blk(gr.sync_block):  # other base classes are basic_block, decim_block, in
         if (self.aQueue.empty()):
             return None
         else:
+            item = self.aQueue.get()
             self.logthispuppy(item["data"],item["time"])
                 
     def work(self, input_items, output_items):
@@ -109,13 +110,13 @@ class blk(gr.sync_block):  # other base classes are basic_block, decim_block, in
         l = len(q)
         bndx = 0
         for i in range(int(l/self.flen)):
-			#
-			# For each channel
-			#
+            #
+            # For each channel
+            #
             for c in range(self.flen):
-				#
-				# Add one sample to current channel
-				#
+                #
+                # Add one sample to current channel
+                #
                 self.channels[c][self.scnt] = q[bndx]
                 bndx += 1
             #
