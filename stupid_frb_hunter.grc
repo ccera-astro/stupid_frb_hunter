@@ -418,7 +418,7 @@ blocks:
     hide: none
     label: Declination
     short_id: ''
-    type: ''
+    type: str
     value: '"-99.0"'
   states:
     bus_sink: false
@@ -894,7 +894,7 @@ blocks:
     hide: none
     label: File prefix
     short_id: ''
-    type: ''
+    type: str
     value: '"./"'
   states:
     bus_sink: false
