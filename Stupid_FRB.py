@@ -15,12 +15,13 @@ import queue
 import copy
 import os
 import random
+import ephem
 
 class blk(gr.sync_block):  # other base classes are basic_block, decim_block, interp_block
     """A FRB first-order detector block"""
 
     def __init__(self, fbsize=16,filename='/dev/null',fbrate=2500,chans=[1,7,14],
-        thresh=5.0,minsmear=2.5e-3,declination=0.0,fake=False):  # only default arguments here
+        thresh=5.0,minsmear=2.5e-3,declination=0.0,fake=False,longitude=76.03):  # only default arguments here
         """arguments to this function show up as parameters in GRC"""
         gr.sync_block.__init__(
             self,
@@ -51,6 +52,7 @@ class blk(gr.sync_block):  # other base classes are basic_block, decim_block, in
         self.fbsize = fbsize
         self.fbrate = fbrate
         self.fake = fake
+        self.longitude = longitude
         #
         # The minimum time distance for detected
         #  pulses between the lowest and highest frequency
@@ -62,7 +64,31 @@ class blk(gr.sync_block):  # other base classes are basic_block, decim_block, in
             
         self.thresh = thresh
         self.flen = fbsize
-
+    #
+    # Given longitude(decimal degrees as a float)
+    #
+    # Return the current sidereal time as a string with
+    #  "," separated tokens
+    #
+    def cur_sidereal(self,longitude):
+        longstr = "%02d" % int(longitude)
+        longstr = longstr + ":"
+        longitude = abs(longitude)
+        frac = longitude - int(longitude)
+        frac *= 60
+        mins = int(frac)
+        longstr += "%02d" % mins
+        longstr += ":00"
+        x = ephem.Observer()
+        x.date = ephem.now()
+        x.long = longstr
+        jdate = ephem.julian_date(x)
+        tokens=str(x.sidereal_time()).split(":")
+        hours=int(tokens[0])
+        minutes=int(tokens[1])
+        seconds=int(float(tokens[2]))
+        sidt = "%02d,%02d,%02d" % (hours, minutes, seconds)
+        return (sidt)
     #
     # Log an event
     #
@@ -86,11 +112,16 @@ class blk(gr.sync_block):  # other base classes are basic_block, decim_block, in
                     declination = -99.00
         else:
             declination = float(self.declination)
+        sidt = self.cur_sidereal(self.longitude)
+        sids = sidt.split(",")
+        sidh = float(sids[0])
+        sidh += float(sids[1])/60.0
+        sidh += float(sids[2])/3600.0
         fn = self.filename+"-"
-        fn = fn + "%-5.1f-%04d%02d%02d-%02d%02d%05.3f" % (declination, ltp.tm_year, ltp.tm_mon,
-            ltp.tm_mday, ltp.tm_hour, ltp.tm_min, float(ltp.tm_sec)+frac)
+        fn = fn + "%.1f-%04d%02d%02d-%02d%02d%05.3f-%.2f" % (declination, ltp.tm_year, ltp.tm_mon,
+            ltp.tm_mday, ltp.tm_hour, ltp.tm_min, float(ltp.tm_sec)+frac, sidh)
         fp = open (fn+".dat", "w")
-        for c in range(self.chans):
+        for c in range(len(chans)):
             fp.write (str(chans[c])+"\n")
         fp.close()
     
