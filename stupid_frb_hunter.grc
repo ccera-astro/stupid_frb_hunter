@@ -937,7 +937,7 @@ blocks:
     hide: none
     label: File prefix
     short_id: ''
-    type: ''
+    type: str
     value: '"./"'
   states:
     bus_sink: false
